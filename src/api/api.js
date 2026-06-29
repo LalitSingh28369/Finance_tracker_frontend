@@ -6,7 +6,7 @@
 // Local Development  -> http://localhost:8080
 // Production (Vercel) -> https://your-render-backend.onrender.com
 
-const BASE_URL = `${import.meta.env.VITE_API_URL}/api`;
+const BASE_URL = "https://financetrackerbackend-production-40d2.up.railway.app/";
 
 // ─────────────────────────────────────────────
 // Helper Function
