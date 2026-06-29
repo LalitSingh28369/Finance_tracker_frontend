@@ -1,16 +1,22 @@
 // ─────────────────────────────────────────────
-//  api.js  —  ALL backend calls live here
-//  Change BASE_URL when you deploy to production
+// api.js - Backend API Configuration
+// Uses environment variables for local & production
 // ─────────────────────────────────────────────
 
-const BASE_URL = "http://localhost:8080/api";
+// Local Development  -> http://localhost:8080
+// Production (Vercel) -> https://your-render-backend.onrender.com
 
-// ── Helper: every fetch goes through this ──
-// So we don't repeat headers & credentials everywhere
+const BASE_URL = `${import.meta.env.VITE_API_URL}/api`;
+
+// ─────────────────────────────────────────────
+// Helper Function
+// ─────────────────────────────────────────────
 const request = async (url, options = {}) => {
   const res = await fetch(`${BASE_URL}${url}`, {
-    headers: { "Content-Type": "application/json" },
-    credentials: "include", // ← sends cookie automatically on every request
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include", // Required for HttpOnly JWT Cookie
     ...options,
   });
 
@@ -19,74 +25,79 @@ const request = async (url, options = {}) => {
     throw new Error(err.message || "Something went wrong");
   }
 
+  // Handle endpoints with no response body
+  if (res.status === 204) return null;
+
   return res.json();
 };
 
 // ─────────────────────────────────────────────
-//  AUTH APIs
+// AUTH APIs
 // ─────────────────────────────────────────────
 
-// POST /api/auth/register
-// Body: { username, email, password }
-// Step 1: Send OTP to email
+// Send OTP
 export const sendOtp = (username, email) =>
   request("/auth/send-otp", {
     method: "POST",
     body: JSON.stringify({ username, email }),
   });
 
-// Step 2: Register with OTP
+// Register User
 export const registerUser = (username, email, password, otp) =>
   request("/auth/register", {
     method: "POST",
-    body: JSON.stringify({ username, email, password, otp }),
+    body: JSON.stringify({
+      username,
+      email,
+      password,
+      otp,
+    }),
   });
 
-
-
-// POST /api/auth/login
-// Body: { username, password }
-// Spring Boot sets HttpOnly cookie in response
+// Login User
 export const loginUser = (username, password) =>
   request("/auth/login", {
     method: "POST",
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({
+      username,
+      password,
+    }),
   });
 
-// POST /api/auth/logout
-// Spring Boot clears the cookie
+// Logout User
 export const logoutUser = () =>
-  request("/auth/logout", { method: "POST" });
+  request("/auth/logout", {
+    method: "POST",
+  });
 
 // ─────────────────────────────────────────────
-//  TRANSACTION APIs
+// TRANSACTION APIs
 // ─────────────────────────────────────────────
 
-// GET /api/transactions
-// Returns all transactions for logged-in user
-export const getTransactions = () => request("/transactions");
+// Get All Transactions
+export const getTransactions = () =>
+  request("/transactions");
 
-// POST /api/transactions
-// Body: { title, amount, category, date, type }
-// type = "income" or "expense"
+// Add Transaction
 export const addTransaction = (transaction) =>
   request("/transactions", {
     method: "POST",
     body: JSON.stringify(transaction),
   });
 
-// PUT /api/transactions/:id
+// Update Transaction
 export const updateTransaction = (id, transaction) =>
   request(`/transactions/${id}`, {
     method: "PUT",
     body: JSON.stringify(transaction),
   });
 
-// DELETE /api/transactions/:id
+// Delete Transaction
 export const deleteTransaction = (id) =>
-  request(`/transactions/${id}`, { method: "DELETE" });
+  request(`/transactions/${id}`, {
+    method: "DELETE",
+  });
 
-// GET /api/transactions/summary
-// Returns { totalIncome, totalExpense, balance }
-export const getSummary = () => request("/transactions/summary");
-
+// Get Dashboard Summary
+export const getSummary = () =>
+  request("/transactions/summary");
