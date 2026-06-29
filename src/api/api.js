@@ -1,41 +1,42 @@
 // ─────────────────────────────────────────────
-// api.js - Backend API Configuration
+// api.js - FIXED VERSION (Vercel + Railway)
 // ─────────────────────────────────────────────
 
-// BASE URL from Vite env
+// Base URL from Vite env
 let BASE_URL = import.meta.env.VITE_API_URL;
 
-// ❗ Safety check
+// Safety check
 if (!BASE_URL) {
   throw new Error("VITE_API_URL is not defined in environment variables");
 }
 
-// 🔥 Remove trailing slash if present
+// Remove trailing slash if any
 BASE_URL = BASE_URL.replace(/\/$/, "");
 
-// 🔥 Ensure backend path consistency (IMPORTANT FIX)
-if (!BASE_URL.endsWith("/api")) {
-  BASE_URL = `${BASE_URL}/api`;
-}
-
-// ─────────────────────────────────────────────
-// Helper Function
-// ─────────────────────────────────────────────
-const request = async (url, options = {}) => {
-  // ensure single slash
+// Ensure all requests go through /api
+const withApiPrefix = (url) => {
   const cleanUrl = url.startsWith("/") ? url : `/${url}`;
 
-  const res = await fetch(`${BASE_URL}${cleanUrl}`, {
+  // if already contains /api, don't duplicate it
+  return cleanUrl.startsWith("/api") ? cleanUrl : `/api${cleanUrl}`;
+};
+
+// ─────────────────────────────────────────────
+// Core request handler
+// ─────────────────────────────────────────────
+const request = async (url, options = {}) => {
+  const finalUrl = `${BASE_URL}${withApiPrefix(url)}`;
+
+  const res = await fetch(finalUrl, {
     method: options.method || "GET",
     headers: {
       "Content-Type": "application/json",
-      Accept: "application/json",
+      ...(options.headers || {}),
     },
     credentials: "include",
-    ...options,
+    body: options.body ? JSON.stringify(options.body) : undefined,
   });
 
-  // handle errors
   if (!res.ok) {
     let errorMessage = "Something went wrong";
 
@@ -47,7 +48,6 @@ const request = async (url, options = {}) => {
     throw new Error(errorMessage);
   }
 
-  // no response body
   if (res.status === 204) return null;
 
   return res.json();
@@ -58,25 +58,25 @@ const request = async (url, options = {}) => {
 // ─────────────────────────────────────────────
 
 export const sendOtp = (username, email) =>
-  request("/auth/send-otp", {
+  request("/api/auth/send-otp", {
     method: "POST",
-    body: JSON.stringify({ username, email }),
+    body: { username, email },
   });
 
 export const registerUser = (username, email, password, otp) =>
-  request("/auth/register", {
+  request("/api/auth/register", {
     method: "POST",
-    body: JSON.stringify({ username, email, password, otp }),
+    body: { username, email, password, otp },
   });
 
 export const loginUser = (username, password) =>
-  request("/auth/login", {
+  request("/api/auth/login", {
     method: "POST",
-    body: JSON.stringify({ username, password }),
+    body: { username, password },
   });
 
 export const logoutUser = () =>
-  request("/auth/logout", {
+  request("/api/auth/logout", {
     method: "POST",
   });
 
@@ -85,24 +85,24 @@ export const logoutUser = () =>
 // ─────────────────────────────────────────────
 
 export const getTransactions = () =>
-  request("/transactions");
+  request("/api/transactions");
 
 export const addTransaction = (transaction) =>
-  request("/transactions", {
+  request("/api/transactions", {
     method: "POST",
-    body: JSON.stringify(transaction),
+    body: transaction,
   });
 
 export const updateTransaction = (id, transaction) =>
-  request(`/transactions/${id}`, {
+  request(`/api/transactions/${id}`, {
     method: "PUT",
-    body: JSON.stringify(transaction),
+    body: transaction,
   });
 
 export const deleteTransaction = (id) =>
-  request(`/transactions/${id}`, {
+  request(`/api/transactions/${id}`, {
     method: "DELETE",
   });
 
 export const getSummary = () =>
-  request("/transactions/summary");
+  request("/api/transactions/summary");
