@@ -1,6 +1,5 @@
 // ─────────────────────────────────────────────
 // api.js - Backend API Configuration
-// Works for Local + Production (Vercel)
 // ─────────────────────────────────────────────
 
 // BASE URL from Vite env
@@ -11,24 +10,32 @@ if (!BASE_URL) {
   throw new Error("VITE_API_URL is not defined in environment variables");
 }
 
-// 🔥 Remove trailing slash if user accidentally adds it
+// 🔥 Remove trailing slash if present
 BASE_URL = BASE_URL.replace(/\/$/, "");
+
+// 🔥 Ensure backend path consistency (IMPORTANT FIX)
+if (!BASE_URL.endsWith("/api")) {
+  BASE_URL = `${BASE_URL}/api`;
+}
 
 // ─────────────────────────────────────────────
 // Helper Function
 // ─────────────────────────────────────────────
 const request = async (url, options = {}) => {
-  // 🔥 ensure URL always starts with single slash
+  // ensure single slash
   const cleanUrl = url.startsWith("/") ? url : `/${url}`;
 
   const res = await fetch(`${BASE_URL}${cleanUrl}`, {
+    method: options.method || "GET",
     headers: {
       "Content-Type": "application/json",
+      Accept: "application/json",
     },
     credentials: "include",
     ...options,
   });
 
+  // handle errors
   if (!res.ok) {
     let errorMessage = "Something went wrong";
 
@@ -40,6 +47,7 @@ const request = async (url, options = {}) => {
     throw new Error(errorMessage);
   }
 
+  // no response body
   if (res.status === 204) return null;
 
   return res.json();
