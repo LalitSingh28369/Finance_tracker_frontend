@@ -1,12 +1,15 @@
 // ─────────────────────────────────────────────
 // api.js - Backend API Configuration
-// Uses environment variables for local & production
+// Works for Local + Production (Vercel)
 // ─────────────────────────────────────────────
 
-// Local Development  -> http://localhost:8080
-// Production (Vercel) -> https://your-render-backend.onrender.com
+// BASE URL comes from environment variable (Vite)
+const BASE_URL = import.meta.env.VITE_API_URL;
 
-const BASE_URL = https://financetrackerbackend-production-40d2.up.railway.app/api";
+// Fallback (in case env is missing)
+if (!BASE_URL) {
+  throw new Error("VITE_API_URL is not defined in environment variables");
+}
 
 // ─────────────────────────────────────────────
 // Helper Function
@@ -16,16 +19,23 @@ const request = async (url, options = {}) => {
     headers: {
       "Content-Type": "application/json",
     },
-    credentials: "include", // Required for HttpOnly JWT Cookie
+    credentials: "include", // required for JWT cookies
     ...options,
   });
 
+  // Handle error responses
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || "Something went wrong");
+    let errorMessage = "Something went wrong";
+
+    try {
+      const err = await res.json();
+      errorMessage = err.message || errorMessage;
+    } catch (e) {}
+
+    throw new Error(errorMessage);
   }
 
-  // Handle endpoints with no response body
+  // No content response
   if (res.status === 204) return null;
 
   return res.json();
@@ -46,22 +56,14 @@ export const sendOtp = (username, email) =>
 export const registerUser = (username, email, password, otp) =>
   request("/auth/register", {
     method: "POST",
-    body: JSON.stringify({
-      username,
-      email,
-      password,
-      otp,
-    }),
+    body: JSON.stringify({ username, email, password, otp }),
   });
 
 // Login User
 export const loginUser = (username, password) =>
   request("/auth/login", {
     method: "POST",
-    body: JSON.stringify({
-      username,
-      password,
-    }),
+    body: JSON.stringify({ username, password }),
   });
 
 // Logout User
