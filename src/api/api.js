@@ -1,24 +1,7 @@
-// ─────────────────────────────────────────────
-// api.js - FINAL FIXED VERSION
-// ─────────────────────────────────────────────
+const BASE_URL = "https://financetrackerbackend-production-40d2.up.railway.app/api";
 
-let BASE_URL = import.meta.env.VITE_API_URL;
-
-if (!BASE_URL) {
-  throw new Error("VITE_API_URL is not defined");
-}
-
-BASE_URL = BASE_URL.replace(/\/$/, "");
-
-// ─────────────────────────────────────────────
-// REQUEST HANDLER
-// ─────────────────────────────────────────────
 const request = async (url, options = {}) => {
-  const cleanUrl = url.startsWith("/") ? url : `/${url}`;
-
-  const finalUrl = `${BASE_URL}/api${cleanUrl}`;
-
-  const res = await fetch(finalUrl, {
+  const res = await fetch(`${BASE_URL}${url}`, {
     method: options.method || "GET",
     headers: {
       "Content-Type": "application/json",
@@ -30,7 +13,8 @@ const request = async (url, options = {}) => {
   if (!res.ok) {
     let msg = "Something went wrong";
     try {
-      msg = (await res.json()).message;
+      const data = await res.json();
+      msg = data.message || msg;
     } catch {}
     throw new Error(msg);
   }
@@ -38,10 +22,7 @@ const request = async (url, options = {}) => {
   return res.status === 204 ? null : res.json();
 };
 
-// ─────────────────────────────────────────────
-// AUTH
-// ─────────────────────────────────────────────
-
+// ── AUTH ──────────────────────────────────────
 export const sendOtp = (username, email) =>
   request("/auth/send-otp", {
     method: "POST",
@@ -61,16 +42,10 @@ export const loginUser = (username, password) =>
   });
 
 export const logoutUser = () =>
-  request("/auth/logout", {
-    method: "POST",
-  });
+  request("/auth/logout", { method: "POST" });
 
-// ─────────────────────────────────────────────
-// TRANSACTIONS
-// ─────────────────────────────────────────────
-
-export const getTransactions = () =>
-  request("/transactions");
+// ── TRANSACTIONS ──────────────────────────────
+export const getTransactions = () => request("/transactions");
 
 export const addTransaction = (transaction) =>
   request("/transactions", {
@@ -85,9 +60,14 @@ export const updateTransaction = (id, transaction) =>
   });
 
 export const deleteTransaction = (id) =>
-  request(`/transactions/${id}`, {
-    method: "DELETE",
-  });
+  request(`/transactions/${id}`, { method: "DELETE" });
 
-export const getSummary = () =>
-  request("/transactions/summary");
+export const getSummary = () => request("/transactions/summary");
+
+export const getBudgetLimits = () => request("/budget");
+
+export const setBudgetLimit = (category, limitAmount) =>
+  request("/budget", {
+    method: "POST",
+    body: { category, limitAmount },
+  });
