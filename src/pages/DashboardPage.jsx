@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
+import BudgetSection from "./BudgetSection";
 import {
   getTransactions,
   addTransaction,
@@ -44,7 +45,7 @@ const DashboardPage = () => {
       setTransactions(Array.isArray(txData) ? txData : []);
       setSummary(summaryData || { balance: 0, totalIncome: 0, totalExpense: 0 });
     } catch (err) {
-      setError("Failed to load data. Is your backend running on localhost:8080?");
+      setError("Failed to load data. Is your backend running?");
     } finally {
       setLoading(false);
     }
@@ -90,6 +91,13 @@ const DashboardPage = () => {
 
   return (
     <div style={styles.page}>
+      <style>{`
+        @media (max-width: 640px) {
+          .summary-cards {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
 
       {/* Navbar */}
       <nav style={styles.nav}>
@@ -119,7 +127,7 @@ const DashboardPage = () => {
         ) : (
           <>
             {/* Summary Cards */}
-            <div style={styles.cards}>
+            <div className="summary-cards" style={styles.cards}>
               <div style={{ ...styles.card, borderTop: "4px solid #0f3460" }}>
                 <div style={styles.cardIcon}>💳</div>
                 <div>
@@ -169,7 +177,6 @@ const DashboardPage = () => {
               {/* Add Form */}
               {showForm && (
                 <div style={styles.formBox}>
-                  {/* Row 1: Title + Amount */}
                   <div style={styles.row}>
                     <div style={styles.fieldBox}>
                       <label style={styles.label}>Title *</label>
@@ -194,7 +201,6 @@ const DashboardPage = () => {
                     </div>
                   </div>
 
-                  {/* Row 2: Category + Type + Date */}
                   <div style={styles.row}>
                     <div style={styles.fieldBox}>
                       <label style={styles.label}>Category *</label>
@@ -232,7 +238,6 @@ const DashboardPage = () => {
                     </div>
                   </div>
 
-                  {/* Preview */}
                   {form.title && form.amount && (
                     <div style={styles.preview}>
                       📝 Preview: <strong>{form.title}</strong> —{" "}
@@ -295,6 +300,10 @@ const DashboardPage = () => {
                 </div>
               )}
             </div>
+
+            {/* ── Budget Section ── */}
+            <BudgetSection />
+
           </>
         )}
       </div>
@@ -368,15 +377,14 @@ const styles = {
     padding: "12px 14px", border: "2px solid #e0e0e0", borderRadius: "10px",
     fontSize: "15px", outline: "none", background: "#fff",
     width: "100%", boxSizing: "border-box",
-    color: "#222",           // ← text visible
-    WebkitTextFillColor: "#222", // ← fixes Safari/Chrome autofill
+    color: "#222",
+    WebkitTextFillColor: "#222",
   },
   select: {
     padding: "12px 14px", border: "2px solid #e0e0e0", borderRadius: "10px",
     fontSize: "15px", outline: "none", background: "#fff",
     width: "100%", boxSizing: "border-box", cursor: "pointer",
-    appearance: "auto",
-    color: "#222",           // ← dropdown text visible
+    appearance: "auto", color: "#222",
   },
   preview: {
     background: "#fff", border: "1px solid #e0e0ff", borderRadius: "8px",
